@@ -44,3 +44,18 @@
 	background-color: #F78181;
 	padding: 1em;
 }
+
+.search-results {
+	font-size: 1.2em;
+	padding: 10px 0;
+}
+
+.display-name {
+	position: relative;
+}
+.user-name {
+	padding: 1em;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+}

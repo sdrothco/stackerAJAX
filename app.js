@@ -3,8 +3,27 @@ $(document).ready( function() {
 		// zero out results if previous search has run
 		$('.results').html('');
 		// get the value of the tags the user submitted
-		var tags = $(this).find("input[name='tags']").val();
+		var inputElem = $(this).find("input[name='tags']");
+		var tags = inputElem.val();
+		inputElem.val("");
+
 		getUnanswered(tags);
+	});
+	$('.inspiration-getter').submit( function(event){
+		// zero out results if previous search has run
+		$('.results').html('');
+		// get the value of the tags the user submitted
+		var inputElem = $(this).find("input[name='answerers']");
+		var tags = inputElem.val();
+		inputElem.val("");
+
+		if(tags.indexOf(';') === -1) {
+			getTopAnswerers(tags);
+		}
+		else {
+			alert("Please enter only ONE tag for which to find top answerers.");
+		}
+		
 	});
 });
 
@@ -35,12 +54,41 @@ var showQuestion = function(question) {
 													question.owner.display_name +
 												'</a>' +
 							'</p>' +
- 							'<p>Reputation: ' + question.owner.reputation + '</p>'
+							'<p>Reputation: ' + question.owner.reputation + '</p>'
 	);
 
 	return result;
 };
 
+
+// this function takes the question object returned by StackOverflow 
+// and creates new result to be appended to DOM
+var showAnswerer = function(answerer) {
+	
+	// clone our result template code
+	var result = $('.templates .top-answerer').clone();
+	
+	// Set the question properties in result
+	var nameElem = result.find('.display-name a');
+	nameElem.attr('href', answerer.user.link);
+
+	var imgSpan = result.find('.display-name a .user-image');
+	imgSpan.attr('src', answerer.user.profile_image);
+
+	var nameSpan = result.find('.display-name a .user-name');
+	nameSpan.text(answerer.user.display_name);
+
+	var reputation = result.find('.reputation');
+	reputation.text(answerer.user.reputation);
+
+	var answerNum = result.find('.answer-num');
+	answerNum.text(answerer.post_count);
+
+	var score = result.find('.answer-score');
+	score.text(answerer.score);
+
+	return result;
+};
 
 // this function takes the results object from StackOverflow
 // and creates info about search results to be appended to DOM
@@ -88,5 +136,34 @@ var getUnanswered = function(tags) {
 	});
 };
 
+// takes a single tag to be searched for on StackOverflow
+var getTopAnswerers = function(tag) {
+	
+	tag = tag.trim();
+	var url = "http://api.stackexchange.com/2.2/tags/" + tag + "/top-answerers/all_time";
 
+	// the parameters we need to pass in our request to StackOverflow's API
+	var request = {site: 'stackoverflow'};
+
+	var result = $.ajax({
+		url: url,
+		data: request,
+		dataType: "jsonp",
+		type: "GET",
+		})
+	.done(function(result){
+		console.log(result);
+		var searchResults = showSearchResults(tag, result.items.length);
+		$('.search-results').html(searchResults);
+
+		$.each(result.items, function(i, item) {
+			var answerer = showAnswerer(item);
+			$('.results').append(answerer);
+		});
+	})
+	.fail(function(jqXHR, error, errorThrown){
+		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	});
+};
 
